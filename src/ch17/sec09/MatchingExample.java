@@ -5,7 +5,7 @@ import java.util.Arrays;
 public class MatchingExample {
 
 	public static void main(String[] args) {
-		int[] intArr = {2,4,6,};
+		int[] intArr = {2,4,6};
 		
 		boolean result = Arrays.stream(intArr)
 				.allMatch(a -> a%2==0);
