@@ -1,14 +1,17 @@
-package ch19.sec04;
+package ch19.sec05.exam02;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketAddress;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 public class NewsServer {
 	private static DatagramSocket datagramSocket = null;
+	private static ExecutorService executorService = Executors.newFixedThreadPool(10);
 	public static void main(String[] args) {
 		System.out.println("---------------------------------------------");
 		System.out.println("서버를 종료하려면 q 또는 Q를 입력하고 Enter 키를 입력하세요.");
@@ -39,16 +42,23 @@ public class NewsServer {
 					while(true) {
 						DatagramPacket receivePacket = new DatagramPacket(new byte[1024], 1024);
 						datagramSocket.receive(receivePacket);
-						String newsKind = new String(receivePacket.getData(), 0, receivePacket.getLength(), "UTF-8");
-						
-						SocketAddress socketAddress = receivePacket.getSocketAddress();
-						
-						for(int i=1; i<=10; i++) {
-							String data = newsKind + ": 뉴스" + i;
-							byte[] bytes = data.getBytes("UTF-8");
-							DatagramPacket sendPacket = new DatagramPacket(bytes, 0, bytes.length, socketAddress);
-							datagramSocket.send(sendPacket);
-						}
+						executorService.execute(() -> {
+							try {
+								String newsKind = new String(receivePacket.getData(), 0, receivePacket.getLength(), "UTF-8");
+								
+								SocketAddress socketAddress = receivePacket.getSocketAddress();
+								
+								for(int i=1; i<=10; i++) {
+									String data = newsKind + ": 뉴스" + i;
+									byte[] bytes = data.getBytes("UTF-8");
+									DatagramPacket sendPacket = new DatagramPacket(bytes, 0, bytes.length, socketAddress);
+									datagramSocket.send(sendPacket);
+								}
+							} catch(Exception e) {
+								
+							}
+
+						});
 					}
 				} catch(IOException e) {
 					System.out.println("[서버] " + e.getMessage());
@@ -61,6 +71,7 @@ public class NewsServer {
 	
 	public static void stopServer() {
 		datagramSocket.close();
+		executorService.shutdownNow();
 		System.out.println("[서버] 종료됨 ");
 	}
 }
